@@ -7,7 +7,7 @@ import {
   getAvailableDates,
   ensureSeedData,
 } from "@/lib/storage";
-import TopicGroupSection from "@/components/TopicGroupSection";
+import TopicGroupCard from "@/components/TopicGroupCard";
 import SourceListDrawer from "@/components/SourceListDrawer";
 import FooterDisclaimer from "@/components/FooterDisclaimer";
 import EmptyState from "@/components/EmptyState";
@@ -30,8 +30,7 @@ export default function Home() {
   }, []);
 
   const loadDate = useCallback((date: string) => {
-    const r = loadDailyRecord(date);
-    setRecord(r);
+    setRecord(loadDailyRecord(date));
   }, []);
 
   useEffect(() => {
@@ -45,65 +44,59 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* ── 헤더 ── */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-5">
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">
-            어쩌라고 뉴스
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-xl font-black text-gray-900 tracking-tight">
+            어쩌라고?
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            문제 제기는 넘치는데, 그래서 어쩌라는 건지는 없는 뉴스 칼럼 분석기
-          </p>
+          {articles.length > 0 && (
+            <SourceListDrawer date={selectedDate} articles={articles} />
+          )}
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 flex-1 w-full">
+      <main className="max-w-2xl mx-auto px-4 py-4 flex-1 w-full">
         {availableDates.length === 0 ? (
           <div className="text-center py-24">
             <div className="text-5xl mb-4 opacity-20">📰</div>
-            <h2 className="text-xl font-bold text-gray-400 mb-2">
+            <h2 className="text-lg font-bold text-gray-400 mb-2">
               아직 분석된 칼럼이 없습니다
             </h2>
             <p className="text-sm text-gray-400">
-              관리자가 칼럼 데이터를 입력하면 이곳에 분석 결과가 표시됩니다.
+              관리자가 칼럼 데이터를 입력하면 여기에 표시됩니다.
             </p>
           </div>
         ) : (
           <>
-            {/* ── 날짜 선택 + 데이터 소스 버튼 ── */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2 flex-wrap">
-                {availableDates.map((date) => (
-                  <button
-                    key={date}
-                    onClick={() => setSelectedDate(date)}
-                    className={`text-sm px-4 py-2 rounded-full font-medium transition-colors ${
-                      date === selectedDate
-                        ? "bg-neutral-800 text-white"
-                        : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {formatDate(date)}
-                  </button>
-                ))}
-              </div>
-
-              {articles.length > 0 && (
-                <SourceListDrawer date={selectedDate} articles={articles} />
-              )}
+            {/* ── 날짜 선택 ── */}
+            <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
+              {availableDates.map((date) => (
+                <button
+                  key={date}
+                  onClick={() => setSelectedDate(date)}
+                  className={`text-sm px-3.5 py-1.5 rounded-full font-medium transition-colors whitespace-nowrap shrink-0 ${
+                    date === selectedDate
+                      ? "bg-neutral-800 text-white"
+                      : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {formatDate(date)}
+                </button>
+              ))}
             </div>
 
-            {/* ── 분석 결과 ── */}
+            {/* ── 분석 결과: 카드형 ── */}
             {hasAnalysis ? (
               <div>
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {analysis!.groups.map((group, i) => (
-                    <TopicGroupSection key={i} group={group} index={i} />
+                    <TopicGroupCard key={i} group={group} index={i} />
                   ))}
                 </div>
 
                 <FooterDisclaimer />
 
-                <p className="text-xs text-gray-400 mt-6 text-right">
+                <p className="text-[11px] text-gray-400 mt-4 text-right">
                   분석 시각:{" "}
                   {new Date(analysis!.analyzedAt).toLocaleString("ko-KR")}
                 </p>
@@ -111,26 +104,23 @@ export default function Home() {
             ) : record && record.items.length > 0 ? (
               <EmptyState
                 title="분석 대기 중"
-                description={`${selectedDate}에 ${record.items.length}개 칼럼이 저장되어 있지만, 아직 분석이 실행되지 않았습니다.`}
+                description={`${record.items.length}개 칼럼이 저장되어 있지만, 아직 분석이 실행되지 않았습니다.`}
               />
             ) : (
               <EmptyState
                 title="데이터 없음"
-                description={`${selectedDate}에 저장된 칼럼이 없습니다.`}
+                description="이 날짜에 저장된 칼럼이 없습니다."
               />
             )}
           </>
         )}
       </main>
 
-      <footer className="border-t border-gray-200 bg-white mt-auto">
-        <div className="max-w-4xl mx-auto px-4 py-5 space-y-1 text-center">
-          <p className="text-xs text-gray-400">
-            어쩌라고 뉴스 — 뉴스 칼럼의 실행력을 따져보는 분석 도구
-          </p>
+      <footer className="border-t border-gray-100 bg-white mt-auto">
+        <div className="max-w-2xl mx-auto px-4 py-4 text-center">
           <p className="text-[11px] text-gray-400">
-            본 분석은 개별 칼럼 텍스트를 기준으로 요약한 것으로, 언론사 전체의
-            공식 입장이나 성향을 대표하지 않습니다.
+            본 분석은 개별 칼럼 텍스트를 기준으로 AI가 요약한 것으로, 언론사
+            전체의 공식 입장이나 성향을 대표하지 않습니다.
           </p>
         </div>
       </footer>

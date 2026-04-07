@@ -13,9 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "어쩌라고 뉴스 - 뉴스 컬럼 분석기",
-  description:
-    "문제 제기는 넘치는데, 그래서 어쩌라는 건지는 없는 뉴스 컬럼 분석기",
+  title: "어쩌라고? - 뉴스 칼럼 분석",
+  description: "뉴스 칼럼의 실행력을 따져보는 AI 분석 서비스",
 };
 
 export default function RootLayout({
