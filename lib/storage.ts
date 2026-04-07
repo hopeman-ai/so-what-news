@@ -6,7 +6,7 @@ const STORAGE_KEY = "so-what-news-data";
 // 추후 Supabase/DB로 교체할 때 이 인터페이스를 구현하면 된다.
 
 // 시드 데이터 버전. 시드를 갱신할 때마다 이 값을 올려야 한다.
-const SEED_VERSION = "5";
+const SEED_VERSION = "6";
 const SEED_VERSION_KEY = "so-what-news-seed-version";
 
 export function loadAllData(): StorageData {

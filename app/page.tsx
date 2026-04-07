@@ -7,30 +7,30 @@ import {
   getAvailableDates,
   ensureSeedData,
 } from "@/lib/storage";
-import TopicGroupCard from "@/components/TopicGroupCard";
+import TopicTabs from "@/components/TopicTabs";
+import TopicDetailCard from "@/components/TopicDetailCard";
 import SourceListDrawer from "@/components/SourceListDrawer";
-import FooterDisclaimer from "@/components/FooterDisclaimer";
 import EmptyState from "@/components/EmptyState";
 
 export default function Home() {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [record, setRecord] = useState<DailyNewsRecord | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState(0);
 
   useEffect(() => {
     async function init() {
       await ensureSeedData();
       const dates = getAvailableDates();
       setAvailableDates(dates);
-      if (dates.length > 0) {
-        setSelectedDate(dates[0]);
-      }
+      if (dates.length > 0) setSelectedDate(dates[0]);
     }
     init();
   }, []);
 
   const loadDate = useCallback((date: string) => {
     setRecord(loadDailyRecord(date));
+    setSelectedTopic(0); // 날짜 변경 시 첫 탭으로
   }, []);
 
   useEffect(() => {
@@ -39,7 +39,9 @@ export default function Home() {
 
   const analysis: FullAnalysisResult | null = record?.analysis || null;
   const articles = record?.items || [];
-  const hasAnalysis = analysis !== null && analysis.groups.length > 0;
+  const groups = analysis?.groups || [];
+  const hasAnalysis = groups.length > 0;
+  const currentGroup = groups[selectedTopic] || null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -55,7 +57,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-4 flex-1 w-full">
+      <main className="max-w-2xl mx-auto px-4 pt-4 pb-6 flex-1 w-full">
         {availableDates.length === 0 ? (
           <div className="text-center py-24">
             <div className="text-5xl mb-4 opacity-20">📰</div>
@@ -85,22 +87,26 @@ export default function Home() {
               ))}
             </div>
 
-            {/* ── 분석 결과: 카드형 ── */}
             {hasAnalysis ? (
-              <div>
-                <div className="space-y-4">
-                  {analysis!.groups.map((group, i) => (
-                    <TopicGroupCard key={i} group={group} index={i} />
-                  ))}
+              <>
+                {/* ── 주제 탭 ── */}
+                <div className="mb-4">
+                  <TopicTabs
+                    groups={groups}
+                    selectedIndex={selectedTopic}
+                    onSelect={setSelectedTopic}
+                  />
                 </div>
 
-                <FooterDisclaimer />
-
-                <p className="text-[11px] text-gray-400 mt-4 text-right">
-                  분석 시각:{" "}
-                  {new Date(analysis!.analyzedAt).toLocaleString("ko-KR")}
-                </p>
-              </div>
+                {/* ── 선택된 주제 상세 카드 ── */}
+                {currentGroup && (
+                  <TopicDetailCard
+                    key={selectedTopic}
+                    group={currentGroup}
+                    index={selectedTopic}
+                  />
+                )}
+              </>
             ) : record && record.items.length > 0 ? (
               <EmptyState
                 title="분석 대기 중"
@@ -116,9 +122,10 @@ export default function Home() {
         )}
       </main>
 
+      {/* ── 하단 안내문구 ── */}
       <footer className="border-t border-gray-100 bg-white mt-auto">
         <div className="max-w-2xl mx-auto px-4 py-4 text-center">
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-400 leading-relaxed">
             본 분석은 개별 칼럼 텍스트를 기준으로 AI가 요약한 것으로, 언론사
             전체의 공식 입장이나 성향을 대표하지 않습니다.
           </p>
@@ -133,6 +140,5 @@ function formatDate(dateStr: string): string {
   const month = d.getMonth() + 1;
   const day = d.getDate();
   const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
-  const weekday = weekdays[d.getDay()];
-  return `${month}월 ${day}일 (${weekday})`;
+  return `${month}월 ${day}일 (${weekdays[d.getDay()]})`;
 }
